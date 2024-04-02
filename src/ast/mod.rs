@@ -2160,6 +2160,17 @@ pub enum Statement {
         database_alias: Ident,
     },
     /// ```sql
+    /// DETACH db_alias;
+    /// ```
+    /// See https://duckdb.org/docs/sql/statements/attach.html
+    /// (DuckDB-specific)
+    DetachDuckDBDatabase {
+        if_exists: bool,
+        /// true if the syntax is 'DETACH DATABASE', false if it's just 'DETACH'
+        database: bool,
+        database_alias: Ident,
+    },
+    /// ```sql
     /// DROP [TABLE, VIEW, ...]
     /// ```
     Drop {
