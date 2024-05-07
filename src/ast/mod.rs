@@ -2171,6 +2171,31 @@ pub enum Statement {
         database_alias: Ident,
     },
     /// ```sql
+    /// ATTACH 'sqlite_file.db' AS sqlite_db (READ_ONLY, TYPE SQLITE);
+    /// ```
+    /// See https://duckdb.org/docs/sql/statements/attach.html
+    /// (DuckDB-specific)
+    AttachDuckDBDatabase {
+        if_not_exists: bool,
+        /// true if the syntax is 'ATTACH DATABASE', false if it's just 'ATTACH'
+        database: bool,
+        /// An expression that indicates the path to the database file
+        database_path: Ident,
+        database_alias: Option<Ident>,
+        attach_options: Vec<AttachDuckDBDatabaseOption>,
+    },
+    /// ```sql
+    /// DETACH db_alias;
+    /// ```
+    /// See https://duckdb.org/docs/sql/statements/attach.html
+    /// (DuckDB-specific)
+    DetachDuckDBDatabase {
+        if_exists: bool,
+        /// true if the syntax is 'DETACH DATABASE', false if it's just 'DETACH'
+        database: bool,
+        database_alias: Ident,
+    },
+    /// ```sql
     /// DROP [TABLE, VIEW, ...]
     /// ```
     Drop {
