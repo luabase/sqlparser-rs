@@ -148,6 +148,7 @@ fn test_select_union_by_name() {
                 distinct: None,
                 top: None,
                 projection: vec![SelectItem::Wildcard(WildcardAdditionalOptions {
+                    opt_ilike: None,
                     opt_exclude: None,
                     opt_except: None,
                     opt_rename: None,
@@ -176,13 +177,16 @@ fn test_select_union_by_name() {
                 sort_by: vec![],
                 having: None,
                 named_window: vec![],
+                window_before_qualify: false,
                 qualify: None,
                 value_table_mode: None,
+                connect_by: None,
             }))),
             right: Box::<SetExpr>::new(SetExpr::Select(Box::new(Select {
                 distinct: None,
                 top: None,
                 projection: vec![SelectItem::Wildcard(WildcardAdditionalOptions {
+                    opt_ilike: None,
                     opt_exclude: None,
                     opt_except: None,
                     opt_rename: None,
@@ -211,8 +215,10 @@ fn test_select_union_by_name() {
                 sort_by: vec![],
                 having: None,
                 named_window: vec![],
+                window_before_qualify: false,
                 qualify: None,
                 value_table_mode: None,
+                connect_by: None,
             }))),
         });
         assert_eq!(ast.body, expected);
@@ -452,7 +458,7 @@ fn test_detach_database() {
     let sql = r#"DETACH DATABASE IF EXISTS db_name"#;
     let stmt = duckdb().verified_stmt(sql);
     assert_eq!(
-        Statement::DetachDuckDBDatabase { 
+        Statement::DetachDuckDBDatabase {
             if_exists: true,
             database: true,
             database_alias: Ident::new("db_name"),
@@ -461,13 +467,12 @@ fn test_detach_database() {
     );
 }
 
-
 #[test]
 fn test_detach_database_simple() {
     let sql = r#"DETACH db_name"#;
     let stmt = duckdb().verified_stmt(sql);
     assert_eq!(
-        Statement::DetachDuckDBDatabase { 
+        Statement::DetachDuckDBDatabase {
             if_exists: false,
             database: false,
             database_alias: Ident::new("db_name"),
@@ -476,6 +481,39 @@ fn test_detach_database_simple() {
     );
 }
 
+#[test]
+fn test_duckdb_named_argument_function_with_assignment_operator() {
+    let sql = "SELECT FUN(a := '1', b := '2') FROM foo";
+    let select = duckdb_and_generic().verified_only_select(sql);
+    assert_eq!(
+        &Expr::Function(Function {
+            name: ObjectName(vec![Ident::new("FUN")]),
+            args: FunctionArguments::List(FunctionArgumentList {
+                duplicate_treatment: None,
+                args: vec![
+                    FunctionArg::Named {
+                        name: Ident::new("a"),
+                        arg: FunctionArgExpr::Expr(Expr::Value(Value::SingleQuotedString(
+                            "1".to_owned()
+                        ))),
+                        operator: FunctionArgOperator::Assignment
+                    },
+                    FunctionArg::Named {
+                        name: Ident::new("b"),
+                        arg: FunctionArgExpr::Expr(Expr::Value(Value::SingleQuotedString(
+                            "2".to_owned()
+                        ))),
+                        operator: FunctionArgOperator::Assignment
+                    },
+                ],
+                clauses: vec![],
+            }),
+            null_treatment: None,
+            filter: None,
+            over: None,
+            within_group: vec![],
+        }),
+        expr_from_projection(only(&select.projection))
 
 #[test]
 fn test_array_index() {
