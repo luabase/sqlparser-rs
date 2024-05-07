@@ -514,6 +514,8 @@ fn test_duckdb_named_argument_function_with_assignment_operator() {
             within_group: vec![],
         }),
         expr_from_projection(only(&select.projection))
+    );
+}
 
 #[test]
 fn test_array_index() {
